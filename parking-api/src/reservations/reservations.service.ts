@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThan, MoreThan, IsNull, Repository } from 'typeorm';
+import { LessThan, MoreThan, IsNull, Not, Repository } from 'typeorm';
 import { Reservation, ReservationStatus } from './entities/reservation.entity';
 import { ParkingSpotsService } from '../parking-spots/parking-spots.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
@@ -205,6 +205,59 @@ export class ReservationsService {
     return this.reservationRepository.save(reservation);
   }
 
+  async enter(id: string): Promise<Reservation> {
+    const reservation = await this.findOne(id);
+
+    if (reservation.status === ReservationStatus.CANCELLED) {
+      throw new BadRequestException(
+        'No se puede dar entrada a una reserva cancelada',
+      );
+    }
+
+    if (reservation.actualEntryDate) {
+      throw new BadRequestException('Esta reserva ya tiene entrada registrada');
+    }
+
+    const now = new Date();
+
+    const physicallyOccupied = await this.reservationRepository.findOne({
+      where: {
+        parkingSpotId: reservation.parkingSpotId,
+        id: Not(reservation.id),
+        status: ReservationStatus.ACTIVE,
+        actualEntryDate: Not(IsNull()),
+        actualExitDate: IsNull(),
+      },
+    });
+
+    if (physicallyOccupied) {
+      throw new BadRequestException(
+        `No se puede dar entrada: la plaza ${reservation.parkingSpotId} está físicamente ocupada por otro vehículo (reserva ${physicallyOccupied.id})`,
+      );
+    }
+
+    const conflictingReservation = await this.reservationRepository.findOne({
+      where: {
+        parkingSpotId: reservation.parkingSpotId,
+        id: Not(reservation.id),
+        status: ReservationStatus.ACTIVE,
+        actualEntryDate: IsNull(),
+        actualExitDate: IsNull(),
+        startDate: LessThan(reservation.endDate),
+        endDate: MoreThan(now),
+      },
+    });
+
+    if (conflictingReservation) {
+      throw new BadRequestException(
+        `No se puede dar entrada: hay otra reserva (${conflictingReservation.id}) que aún no ha entrado pero se solapa con este horario. El cliente está llegando antes de tiempo.`,
+      );
+    }
+
+    reservation.actualEntryDate = now;
+    return this.reservationRepository.save(reservation);
+  }
+
   async exit(id: string): Promise<Reservation> {
     const reservation = await this.findOne(id);
 
@@ -244,17 +297,30 @@ export class ReservationsService {
         totalSpots: number;
         occupiedSpots: number;
         availableSpots: number;
-        reservations: Reservation[];
+        pendingCheckIn: number;
+        occupiedReservations: Reservation[];
+        pendingCheckInReservations: Reservation[];
       }
     >;
   }> {
     const now = new Date();
 
-    const occupyingReservations = await this.reservationRepository.find({
+    const occupiedReservations = await this.reservationRepository.find({
       where: {
         status: ReservationStatus.ACTIVE,
+        actualEntryDate: Not(IsNull()),
+        actualExitDate: IsNull(),
+      },
+      relations: { parkingSpot: true, user: true },
+    });
+
+    const pendingCheckInReservations = await this.reservationRepository.find({
+      where: {
+        status: ReservationStatus.ACTIVE,
+        actualEntryDate: IsNull(),
         actualExitDate: IsNull(),
         startDate: LessThan(now),
+        endDate: MoreThan(now),
       },
       relations: { parkingSpot: true, user: true },
     });
@@ -267,7 +333,9 @@ export class ReservationsService {
         totalSpots: number;
         occupiedSpots: number;
         availableSpots: number;
-        reservations: Reservation[];
+        pendingCheckIn: number;
+        occupiedReservations: Reservation[];
+        pendingCheckInReservations: Reservation[];
       }
     >;
 
@@ -276,15 +344,21 @@ export class ReservationsService {
         (s) => s.type === vehicleType && s.isActive,
       );
 
-      const reservationsOfType = occupyingReservations.filter(
+      const occupiedOfType = occupiedReservations.filter(
+        (r) => r.parkingSpot.type === vehicleType,
+      );
+
+      const pendingOfType = pendingCheckInReservations.filter(
         (r) => r.parkingSpot.type === vehicleType,
       );
 
       byType[vehicleType] = {
         totalSpots: spotsOfType.length,
-        occupiedSpots: reservationsOfType.length,
-        availableSpots: spotsOfType.length - reservationsOfType.length,
-        reservations: reservationsOfType,
+        occupiedSpots: occupiedOfType.length,
+        availableSpots: spotsOfType.length - occupiedOfType.length,
+        pendingCheckIn: pendingOfType.length,
+        occupiedReservations: occupiedOfType,
+        pendingCheckInReservations: pendingOfType,
       };
     }
 

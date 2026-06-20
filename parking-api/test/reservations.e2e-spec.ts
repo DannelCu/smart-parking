@@ -11,10 +11,10 @@ import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { AppModule } from '../src/app.module';
 
-const futureDate = (daysFromNow: number, hour = 10): string => {
+const futureDate = (daysFromNow: number, hour = 10, minutes = 0): string => {
   const date = new Date();
   date.setDate(date.getDate() + daysFromNow);
-  date.setHours(hour, 0, 0, 0);
+  date.setHours(hour, minutes, 0, 0);
   return date.toISOString();
 };
 
@@ -329,9 +329,16 @@ describe('Reservations (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      const body = response.body as { byType: Record<string, unknown> };
+      const body = response.body as {
+        byType: Record<
+          string,
+          { totalSpots: number; occupiedSpots: number; pendingCheckIn: number }
+        >;
+      };
       expect(body.byType).toHaveProperty('auto');
       expect(body.byType).toHaveProperty('ciclo');
+      expect(body.byType.auto).toHaveProperty('pendingCheckIn');
+      expect(body.byType.auto).toHaveProperty('occupiedSpots');
     });
 
     it('cliente debe recibir 403', async () => {
@@ -507,6 +514,219 @@ describe('Reservations (e2e)', () => {
 
       const body = response.body as { parkingSpotId: string };
       expect(body.parkingSpotId).toBe(exitSpotId);
+    });
+  });
+
+  describe('PATCH /reservations/:id/enter', () => {
+    let enterSpotId: string;
+    let enterSpotEarlyId: string;
+    let enterSpotNoShowId: string;
+    let currentOccupantId: string;
+    let earlyId: string;
+    let freeSlotReservationId: string;
+
+    beforeAll(async () => {
+      const spot = await request(app.getHttpServer())
+        .post('/parking-spots')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ code: 'ENTER-A1', type: 'auto' });
+      enterSpotId = (spot.body as { id: string }).id;
+
+      const spotEarly = await request(app.getHttpServer())
+        .post('/parking-spots')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ code: 'ENTER-A2', type: 'auto' });
+      enterSpotEarlyId = (spotEarly.body as { id: string }).id;
+
+      const spotNoShow = await request(app.getHttpServer())
+        .post('/parking-spots')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ code: 'ENTER-A3', type: 'auto' });
+      enterSpotNoShowId = (spotNoShow.body as { id: string }).id;
+
+      await request(app.getHttpServer())
+        .post('/reservations/admin')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          userId: clienteId,
+          parkingSpotId: enterSpotNoShowId,
+          vehiclePlate: 'OLDNOSHOW',
+          vehicleType: 'auto',
+          startDate: '2020-01-01T08:00:00Z',
+          endDate: '2020-01-01T10:00:00Z',
+        })
+        .expect(201);
+
+      const currentOccupant = await request(app.getHttpServer())
+        .post('/reservations/admin')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          userId: clienteId,
+          parkingSpotId: enterSpotId,
+          vehiclePlate: 'OCCUPANT01',
+          vehicleType: 'auto',
+          startDate: '2020-06-01T08:00:00Z',
+          endDate: futureDate(60, 10),
+        })
+        .expect(201);
+      currentOccupantId = (currentOccupant.body as { id: string }).id;
+
+      await request(app.getHttpServer())
+        .patch(`/reservations/${currentOccupantId}/enter`)
+        .set('Authorization', `Bearer ${empleadoToken}`)
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .post('/reservations/admin')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          userId: cliente2Id,
+          parkingSpotId: enterSpotEarlyId,
+          vehiclePlate: 'FUTURENC',
+          vehicleType: 'auto',
+          startDate: futureDate(70, 7, 0),
+          endDate: futureDate(70, 8, 59),
+        })
+        .expect(201);
+
+      const early = await request(app.getHttpServer())
+        .post('/reservations/admin')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          userId: clienteId,
+          parkingSpotId: enterSpotEarlyId,
+          vehiclePlate: 'EARLY01',
+          vehicleType: 'auto',
+          startDate: futureDate(70, 9, 0),
+          endDate: futureDate(70, 12, 0),
+        })
+        .expect(201);
+      earlyId = (early.body as { id: string }).id;
+
+      const freeSlot = await request(app.getHttpServer())
+        .post('/reservations/admin')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          userId: cliente2Id,
+          parkingSpotId: enterSpotNoShowId,
+          vehiclePlate: 'FREESLOT',
+          vehicleType: 'auto',
+          startDate: futureDate(80, 9),
+          endDate: futureDate(80, 12),
+        })
+        .expect(201);
+      freeSlotReservationId = (freeSlot.body as { id: string }).id;
+    });
+
+    it('cliente debe recibir 403', async () => {
+      await request(app.getHttpServer())
+        .patch(`/reservations/${freeSlotReservationId}/enter`)
+        .set('Authorization', `Bearer ${clienteToken}`)
+        .expect(403);
+    });
+
+    it('debe fallar si la plaza está físicamente ocupada por otro vehículo', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/reservations/admin')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          userId: cliente2Id,
+          parkingSpotId: enterSpotId,
+          vehiclePlate: 'CONFLICT01',
+          vehicleType: 'auto',
+          startDate: futureDate(65, 9),
+          endDate: futureDate(65, 11),
+        })
+        .expect(201);
+      const conflictId = (response.body as { id: string }).id;
+
+      const result = await request(app.getHttpServer())
+        .patch(`/reservations/${conflictId}/enter`)
+        .set('Authorization', `Bearer ${empleadoToken}`)
+        .expect(400);
+
+      const body = result.body as { message: string };
+      expect(body.message).toContain('físicamente ocupada');
+    });
+
+    it('debe fallar si hay otra reserva sin check-in que se solapa (llegó antes de tiempo)', async () => {
+      const result = await request(app.getHttpServer())
+        .patch(`/reservations/${earlyId}/enter`)
+        .set('Authorization', `Bearer ${empleadoToken}`)
+        .expect(400);
+
+      const body = result.body as { message: string };
+      expect(body.message).toContain('antes de tiempo');
+    });
+
+    it('NO debe fallar por un no-show viejo ya expirado en la misma plaza', async () => {
+      await request(app.getHttpServer())
+        .patch(`/reservations/${freeSlotReservationId}/enter`)
+        .set('Authorization', `Bearer ${empleadoToken}`)
+        .expect(200);
+    });
+
+    it('empleado debe poder dar entrada a un vehículo correctamente', async () => {
+      const cleanSpot = await request(app.getHttpServer())
+        .post('/parking-spots')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ code: 'ENTER-CLEAN', type: 'auto' })
+        .expect(201);
+      const cleanSpotId = (cleanSpot.body as { id: string }).id;
+
+      const response = await request(app.getHttpServer())
+        .post('/reservations/admin')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          userId: clienteId,
+          parkingSpotId: cleanSpotId,
+          vehiclePlate: 'CLEANENTRY',
+          vehicleType: 'auto',
+          startDate: futureDate(90, 9),
+          endDate: futureDate(90, 17),
+        })
+        .expect(201);
+      const cleanId = (response.body as { id: string }).id;
+
+      const result = await request(app.getHttpServer())
+        .patch(`/reservations/${cleanId}/enter`)
+        .set('Authorization', `Bearer ${empleadoToken}`)
+        .expect(200);
+
+      const body = result.body as { actualEntryDate: string | null };
+      expect(body.actualEntryDate).not.toBeNull();
+    });
+
+    it('debe fallar si ya tiene entrada registrada', async () => {
+      await request(app.getHttpServer())
+        .patch(`/reservations/${currentOccupantId}/enter`)
+        .set('Authorization', `Bearer ${empleadoToken}`)
+        .expect(400);
+    });
+
+    it('debe fallar si la reserva está cancelada', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/reservations/admin')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          userId: clienteId,
+          vehicleType: 'ciclo',
+          vehiclePlate: 'CANCELLED01',
+          startDate: futureDate(95, 9),
+          endDate: futureDate(95, 17),
+        })
+        .expect(201);
+      const cancelledId = (response.body as { id: string }).id;
+
+      await request(app.getHttpServer())
+        .patch(`/reservations/${cancelledId}/cancel`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .patch(`/reservations/${cancelledId}/enter`)
+        .set('Authorization', `Bearer ${empleadoToken}`)
+        .expect(400);
     });
   });
 });

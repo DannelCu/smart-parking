@@ -82,6 +82,12 @@ export class ReservationsController {
     return this.reservationsService.cancel(id, req.user.id, req.user.role);
   }
 
+  @Patch(':id/enter')
+  @Roles(UserRole.ADMIN, UserRole.EMPLEADO)
+  enter(@Param('id') id: string): Promise<Reservation> {
+    return this.reservationsService.enter(id);
+  }
+
   @Patch(':id/exit')
   @Roles(UserRole.ADMIN, UserRole.EMPLEADO)
   exit(@Param('id') id: string): Promise<Reservation> {

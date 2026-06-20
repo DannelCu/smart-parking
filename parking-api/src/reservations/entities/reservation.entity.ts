@@ -53,6 +53,9 @@ export class Reservation {
   endDate: Date;
 
   @Column({ type: 'timestamp', nullable: true })
+  actualEntryDate: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
   actualExitDate: Date | null;
 
   @Column({
