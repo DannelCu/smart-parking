@@ -11,6 +11,13 @@ import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { AppModule } from '../src/app.module';
 
+const futureDate = (daysFromNow: number, hour = 10): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromNow);
+  date.setHours(hour, 0, 0, 0);
+  return date.toISOString();
+};
+
 describe('Reservations (e2e)', () => {
   let app: INestApplication<App>;
   let dataSource: DataSource;
@@ -61,7 +68,7 @@ describe('Reservations (e2e)', () => {
     const empleadoRows: { id: string }[] = await dataSource.query(
       `INSERT INTO users (id, name, email, password, role)
        VALUES (gen_random_uuid(), 'Empleado Test', 'empleado-res@parking.com', $1, 'empleado')
-       RETURNING id`,
+         RETURNING id`,
       [hashedPassword],
     );
     empleadoId = empleadoRows[0].id;
@@ -142,8 +149,8 @@ describe('Reservations (e2e)', () => {
           parkingSpotId: spotCarA,
           vehiclePlate: 'ABC123',
           vehicleType: 'auto',
-          startDate: '2026-07-01T10:00:00Z',
-          endDate: '2026-07-01T18:00:00Z',
+          startDate: futureDate(10, 10),
+          endDate: futureDate(10, 18),
         })
         .expect(201);
 
@@ -158,8 +165,8 @@ describe('Reservations (e2e)', () => {
         .send({
           vehiclePlate: 'XYZ789',
           vehicleType: 'auto',
-          startDate: '2026-07-05T10:00:00Z',
-          endDate: '2026-07-05T18:00:00Z',
+          startDate: futureDate(14, 10),
+          endDate: futureDate(14, 18),
         })
         .expect(201);
 
@@ -175,8 +182,8 @@ describe('Reservations (e2e)', () => {
           parkingSpotId: spotCarB,
           vehiclePlate: 'DEF456',
           vehicleType: 'auto',
-          startDate: '2026-07-10T18:00:00Z',
-          endDate: '2026-07-10T10:00:00Z',
+          startDate: futureDate(20, 18),
+          endDate: futureDate(20, 10),
         })
         .expect(400);
     });
@@ -189,8 +196,8 @@ describe('Reservations (e2e)', () => {
           parkingSpotId: spotCycleA,
           vehiclePlate: 'GHI789',
           vehicleType: 'auto',
-          startDate: '2026-07-12T10:00:00Z',
-          endDate: '2026-07-12T18:00:00Z',
+          startDate: futureDate(22, 10),
+          endDate: futureDate(22, 18),
         })
         .expect(400);
     });
@@ -203,8 +210,8 @@ describe('Reservations (e2e)', () => {
           parkingSpotId: spotCarA,
           vehiclePlate: 'JKL012',
           vehicleType: 'auto',
-          startDate: '2026-07-01T12:00:00Z',
-          endDate: '2026-07-01T15:00:00Z',
+          startDate: futureDate(10, 12),
+          endDate: futureDate(10, 15),
         })
         .expect(400);
     });
@@ -217,10 +224,24 @@ describe('Reservations (e2e)', () => {
           parkingSpotId: spotCarB,
           vehiclePlate: 'MNO345',
           vehicleType: 'auto',
-          startDate: '2026-07-15T10:00:00Z',
-          endDate: '2026-07-15T18:00:00Z',
+          startDate: futureDate(25, 10),
+          endDate: futureDate(25, 18),
         })
         .expect(403);
+    });
+
+    it('debe fallar si startDate es anterior al momento actual', async () => {
+      await request(app.getHttpServer())
+        .post('/reservations')
+        .set('Authorization', `Bearer ${clienteToken}`)
+        .send({
+          parkingSpotId: spotCarB,
+          vehiclePlate: 'PAST001',
+          vehicleType: 'auto',
+          startDate: '2020-01-01T10:00:00Z',
+          endDate: '2020-01-01T18:00:00Z',
+        })
+        .expect(400);
     });
   });
 
@@ -234,8 +255,8 @@ describe('Reservations (e2e)', () => {
           parkingSpotId: spotCarB,
           vehiclePlate: 'PQR678',
           vehicleType: 'auto',
-          startDate: '2026-07-20T10:00:00Z',
-          endDate: '2026-07-20T18:00:00Z',
+          startDate: futureDate(30, 10),
+          endDate: futureDate(30, 18),
         })
         .expect(201);
 
@@ -251,8 +272,8 @@ describe('Reservations (e2e)', () => {
           userId: empleadoId,
           vehiclePlate: 'STU901',
           vehicleType: 'ciclo',
-          startDate: '2026-07-21T10:00:00Z',
-          endDate: '2026-07-21T18:00:00Z',
+          startDate: futureDate(31, 10),
+          endDate: futureDate(31, 18),
         })
         .expect(400);
     });
@@ -265,10 +286,27 @@ describe('Reservations (e2e)', () => {
           userId: clienteId,
           vehiclePlate: 'VWX234',
           vehicleType: 'auto',
-          startDate: '2026-07-22T10:00:00Z',
-          endDate: '2026-07-22T18:00:00Z',
+          startDate: futureDate(32, 10),
+          endDate: futureDate(32, 18),
         })
         .expect(403);
+    });
+
+    it('admin debe poder crear una reserva con fecha pasada para un cliente', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/reservations/admin')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          userId: cliente2Id,
+          vehiclePlate: 'PASTADMIN01',
+          vehicleType: 'ciclo',
+          startDate: '2020-01-01T10:00:00Z',
+          endDate: '2020-01-01T18:00:00Z',
+        })
+        .expect(201);
+
+      const body = response.body as { startDate: string };
+      expect(body.startDate).toBe('2020-01-01T10:00:00.000Z');
     });
   });
 
@@ -332,8 +370,8 @@ describe('Reservations (e2e)', () => {
         .send({
           vehiclePlate: 'DETAIL01',
           vehicleType: 'ciclo',
-          startDate: '2026-08-01T10:00:00Z',
-          endDate: '2026-08-01T18:00:00Z',
+          startDate: futureDate(40, 10),
+          endDate: futureDate(40, 18),
         });
       reservationId = (response.body as { id: string }).id;
     });
@@ -377,8 +415,8 @@ describe('Reservations (e2e)', () => {
         .send({
           vehiclePlate: 'CANCEL01',
           vehicleType: 'ciclo',
-          startDate: '2026-08-10T10:00:00Z',
-          endDate: '2026-08-10T18:00:00Z',
+          startDate: futureDate(45, 10),
+          endDate: futureDate(45, 18),
         });
       cancelableId = (response.body as { id: string }).id;
     });
@@ -417,9 +455,10 @@ describe('Reservations (e2e)', () => {
       exitSpotId = (spot.body as { id: string }).id;
 
       const response = await request(app.getHttpServer())
-        .post('/reservations')
-        .set('Authorization', `Bearer ${clienteToken}`)
+        .post('/reservations/admin')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
+          userId: clienteId,
           parkingSpotId: exitSpotId,
           vehiclePlate: 'EXIT001',
           vehicleType: 'auto',
@@ -461,8 +500,8 @@ describe('Reservations (e2e)', () => {
           parkingSpotId: exitSpotId,
           vehiclePlate: 'NEWCAR01',
           vehicleType: 'auto',
-          startDate: '2026-09-01T10:00:00Z',
-          endDate: '2026-09-01T18:00:00Z',
+          startDate: futureDate(50, 10),
+          endDate: futureDate(50, 18),
         })
         .expect(201);
 

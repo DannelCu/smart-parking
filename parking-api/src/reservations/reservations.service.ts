@@ -84,9 +84,16 @@ export class ReservationsService {
   async create(
     userId: string,
     createReservationDto: CreateReservationDto,
+    skipPastDateValidation = false,
   ): Promise<Reservation> {
     const startDate = new Date(createReservationDto.startDate);
     const endDate = new Date(createReservationDto.endDate);
+
+    if (!skipPastDateValidation && startDate < new Date()) {
+      throw new BadRequestException(
+        'La fecha de inicio no puede ser anterior al momento actual',
+      );
+    }
 
     if (startDate >= endDate) {
       throw new BadRequestException(
@@ -165,7 +172,7 @@ export class ReservationsService {
 
     const { userId, ...reservationData } = createDto;
 
-    return this.create(userId, reservationData);
+    return this.create(userId, reservationData, true);
   }
 
   async cancel(
