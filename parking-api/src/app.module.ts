@@ -9,6 +9,8 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { ParkingSpotsModule } from './parking-spots/parking-spots.module';
+import { ReservationsModule } from './reservations/reservations.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { RolesGuard } from './common/guards/roles.guard';
     }),
     AuthModule,
     UsersModule,
+    ParkingSpotsModule,
+    ReservationsModule,
   ],
   controllers: [AppController],
   providers: [

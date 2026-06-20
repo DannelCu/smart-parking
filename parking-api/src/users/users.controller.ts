@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Put,
   Patch,
   Delete,
@@ -15,6 +16,7 @@ import { ChangeRoleDto } from './dto/change-role.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole, User } from './entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -41,6 +43,12 @@ export class UsersController {
   @Roles(UserRole.ADMIN)
   findAll(): Promise<User[]> {
     return this.usersService.findAll();
+  }
+
+  @Post()
+  @Roles(UserRole.ADMIN)
+  create(@Body() createUserDto: CreateUserDto): Promise<User> {
+    return this.usersService.create(createUserDto);
   }
 
   @Get(':id')
