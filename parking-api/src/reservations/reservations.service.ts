@@ -156,7 +156,9 @@ export class ReservationsService {
       status: ReservationStatus.ACTIVE,
     });
 
-    return this.reservationRepository.save(reservation);
+    const saved = await this.reservationRepository.save(reservation);
+
+    return this.findOne(saved.id);
   }
 
   async createForUser(

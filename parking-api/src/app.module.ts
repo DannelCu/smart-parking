@@ -11,6 +11,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { ParkingSpotsModule } from './parking-spots/parking-spots.module';
 import { ReservationsModule } from './reservations/reservations.module';
+import { AuditLogModule } from './audit-log/audit-log.module';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { ReservationsModule } from './reservations/reservations.module';
         password: config.get('DB_PASSWORD'),
         database: config.get('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: true, // solo para desarrollo
+        synchronize: true,
       }),
       inject: [ConfigService],
     }),
@@ -42,6 +43,7 @@ import { ReservationsModule } from './reservations/reservations.module';
     UsersModule,
     ParkingSpotsModule,
     ReservationsModule,
+    AuditLogModule,
   ],
   controllers: [AppController],
   providers: [

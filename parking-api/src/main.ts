@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
+import { ConditionalSerializerInterceptor } from './common/interceptors/conditional-serializer.interceptor';
 import { Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 
@@ -14,7 +15,9 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+  app.useGlobalInterceptors(
+    new ConditionalSerializerInterceptor(app.get(Reflector)),
+  );
 
   await app.listen(process.env.PORT ?? 3000);
 }
