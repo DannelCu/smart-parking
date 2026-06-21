@@ -18,6 +18,7 @@ parking-api/.env
 .env.development
 .env.test
 .env.production
+.env
 
 # temp directory
 .temp

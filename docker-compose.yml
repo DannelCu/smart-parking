@@ -3,11 +3,11 @@ services:
     image: postgres:15
     container_name: parking_postgres
     environment:
-      POSTGRES_USER: parking_user
-      POSTGRES_PASSWORD: parking_pass
-      POSTGRES_DB: parking_db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - '5434:5432'
+      - '${DB_PORT}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -15,12 +15,11 @@ services:
     image: postgres:15
     container_name: parking_postgres_test
     environment:
-      POSTGRES_USER: parking_user
-      POSTGRES_PASSWORD: parking_pass
-      POSTGRES_DB: parking_test_db
-      POSTGRES_HOST_AUTH_METHOD: md5
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_TEST_NAME}
     ports:
-      - '5435:5432'
+      - '${DB_TEST_PORT}:5432'
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
 
@@ -28,7 +27,7 @@ services:
     image: mongo:6
     container_name: parking_mongo
     ports:
-      - '27017:27017'
+      - '${MONGO_PORT}:27017'
     volumes:
       - mongo_data:/data/db
 
