@@ -1,9 +1,8 @@
 {
   "info": {
-    "_postman_id": "a8fbba82-6c70-4442-ae8a-89d94de379f9",
-    "name": "parking-api",
+    "name": "Smart Parking API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "27566926"
+    "description": "Colección de Postman para la Smart Parking API.\n\nUSO RÁPIDO:\n1. Asegúrate de que la variable de colección `baseUrl` apunta a tu instancia (por defecto http://localhost:3000).\n2. Ejecuta `auth > login` con credenciales válidas. El token se guarda automáticamente en la variable `{{token}}` y el resto de peticiones lo usan vía la autenticación heredada (Bearer Token) a nivel de colección.\n3. Para endpoints que requieren un id en la ruta, ajusta las variables `userId`, `spotId` y `reservationId` con valores reales de tu base de datos (los valores actuales son solo ejemplos de demostración).\n\nLas credenciales de demo (cliente.demo@parking.com / admin@parking.com) corresponden al script de seed del proyecto."
   },
   "item": [
     {
@@ -16,7 +15,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"name\": \"Client 1\",\r\n  \"email\": \"c1@parking.com\",\r\n  \"password\": \"123456\",\r\n  \"role\": \"admin\"\r\n}\r\n",
+              "raw": "{\n  \"name\": \"Cliente Demo\",\n  \"email\": \"cliente.demo@parking.com\",\n  \"password\": \"123456\",\n  \"phone\": \"+34600000000\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -24,12 +23,10 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/auth/register",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/auth/register",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "auth",
                 "register"
@@ -53,19 +50,35 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/auth/login",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/auth/login",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "auth",
                 "login"
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Captura automática del token tras un login correcto",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    if (data && data.access_token) {",
+                  "        pm.collectionVariables.set('token', data.access_token);",
+                  "        console.log('Token guardado en la variable de colección {{token}}');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -75,25 +88,13 @@
         {
           "name": "profile",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxODM2MTA2LCJleHAiOjE3ODE5MjI1MDZ9.ECmpJdhTgh8AMhFdAFs9A-91hk-x4Oh29WByItsEhA8",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:3000/users/profile",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/users/profile",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "users",
                 "profile"
@@ -105,16 +106,6 @@
         {
           "name": "changePass",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxODM2MTA2LCJleHAiOjE3ODE5MjI1MDZ9.ECmpJdhTgh8AMhFdAFs9A-91hk-x4Oh29WByItsEhA8",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "PATCH",
             "header": [],
             "body": {
@@ -127,12 +118,10 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/users/change-password",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/users/change-password",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "users",
                 "change-password"
@@ -144,25 +133,13 @@
         {
           "name": "allUsers[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxOTcyMjgwLCJleHAiOjE3ODIwNTg2ODB9.dDON8s1z4YPdyWaI0QqlQQcEJN52uDX_HTphCkl9z8o",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:3000/users",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/users",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "users"
               ]
@@ -173,16 +150,6 @@
         {
           "name": "createUser[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxODc5MTM5LCJleHAiOjE3ODE5NjU1Mzl9.pn4QukT1skPuv02OQPOOzlFFDDvIW8swvhCQWhoxAdM",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [],
             "body": {
@@ -195,12 +162,10 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/users",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/users",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "users"
               ]
@@ -211,28 +176,16 @@
         {
           "name": "GetOneUser[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxODc5MTM5LCJleHAiOjE3ODE5NjU1Mzl9.pn4QukT1skPuv02OQPOOzlFFDDvIW8swvhCQWhoxAdM",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:3000/users/fad02872-4e31-4fdf-9a04-2994ac079c06",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/users/{{userId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "users",
-                "fad02872-4e31-4fdf-9a04-2994ac079c06"
+                "{{userId}}"
               ]
             }
           },
@@ -241,16 +194,6 @@
         {
           "name": "updateUser[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxODM2MTA2LCJleHAiOjE3ODE5MjI1MDZ9.ECmpJdhTgh8AMhFdAFs9A-91hk-x4Oh29WByItsEhA8",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "PUT",
             "header": [],
             "body": {
@@ -263,15 +206,13 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/users/fad02872-4e31-4fdf-9a04-2994ac079c06",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/users/{{userId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "users",
-                "fad02872-4e31-4fdf-9a04-2994ac079c06"
+                "{{userId}}"
               ]
             }
           },
@@ -280,16 +221,6 @@
         {
           "name": "changeRole[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxODM2MTA2LCJleHAiOjE3ODE5MjI1MDZ9.ECmpJdhTgh8AMhFdAFs9A-91hk-x4Oh29WByItsEhA8",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "PATCH",
             "header": [],
             "body": {
@@ -302,15 +233,13 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/users/fad02872-4e31-4fdf-9a04-2994ac079c06/role",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/users/{{userId}}/role",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "users",
-                "fad02872-4e31-4fdf-9a04-2994ac079c06",
+                "{{userId}}",
                 "role"
               ]
             }
@@ -320,16 +249,6 @@
         {
           "name": "resetPass[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxODM2MTA2LCJleHAiOjE3ODE5MjI1MDZ9.ECmpJdhTgh8AMhFdAFs9A-91hk-x4Oh29WByItsEhA8",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "PATCH",
             "header": [],
             "body": {
@@ -342,15 +261,13 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/users/fad02872-4e31-4fdf-9a04-2994ac079c06/password",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/users/{{userId}}/password",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "users",
-                "fad02872-4e31-4fdf-9a04-2994ac079c06",
+                "{{userId}}",
                 "password"
               ]
             }
@@ -360,16 +277,6 @@
         {
           "name": "deleteUser[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxODM2MTA2LCJleHAiOjE3ODE5MjI1MDZ9.ECmpJdhTgh8AMhFdAFs9A-91hk-x4Oh29WByItsEhA8",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "DELETE",
             "header": [],
             "body": {
@@ -382,15 +289,13 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/users/43453d97-b12f-48b2-ac30-ea4c359b7d4f",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/users/{{userId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "users",
-                "43453d97-b12f-48b2-ac30-ea4c359b7d4f"
+                "{{userId}}"
               ]
             }
           },
@@ -404,16 +309,6 @@
         {
           "name": "createPs[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxODk4MjQwLCJleHAiOjE3ODE5ODQ2NDB9.sLe-cd4BDmXxD4-WcoCfuRRvGvva6GnVrHxkHMBndws",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [],
             "body": {
@@ -426,12 +321,10 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/parking-spots",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/parking-spots",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "parking-spots"
               ]
@@ -445,34 +338,13 @@
             "disableBodyPruning": true
           },
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgyMDgxOTA4LCJleHAiOjE3ODIxNjgzMDh9.bye3YFxTTzcgY8izyLMh3zZ46s3okq_6__KubFTms14",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
             "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
             "url": {
-              "raw": "http://localhost:3000/parking-spots",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/parking-spots",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "parking-spots"
               ]
@@ -486,37 +358,16 @@
             "disableBodyPruning": true
           },
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxODk4MjQwLCJleHAiOjE3ODE5ODQ2NDB9.sLe-cd4BDmXxD4-WcoCfuRRvGvva6GnVrHxkHMBndws",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
             "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
             "url": {
-              "raw": "http://localhost:3000/parking-spots/ce5505dc-9cd9-40ae-9345-8342c41a3d3a",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/parking-spots/{{spotId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "parking-spots",
-                "ce5505dc-9cd9-40ae-9345-8342c41a3d3a"
+                "{{spotId}}"
               ]
             }
           },
@@ -525,16 +376,6 @@
         {
           "name": "updatePs[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxODk4MjQwLCJleHAiOjE3ODE5ODQ2NDB9.sLe-cd4BDmXxD4-WcoCfuRRvGvva6GnVrHxkHMBndws",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "PUT",
             "header": [],
             "body": {
@@ -547,15 +388,13 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/parking-spots/ce5505dc-9cd9-40ae-9345-8342c41a3d3a",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/parking-spots/{{spotId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "parking-spots",
-                "ce5505dc-9cd9-40ae-9345-8342c41a3d3a"
+                "{{spotId}}"
               ]
             }
           },
@@ -564,28 +403,16 @@
         {
           "name": "deletePs[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxODk4MjQwLCJleHAiOjE3ODE5ODQ2NDB9.sLe-cd4BDmXxD4-WcoCfuRRvGvva6GnVrHxkHMBndws",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:3000/parking-spots/ce5505dc-9cd9-40ae-9345-8342c41a3d3a",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/parking-spots/{{spotId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "parking-spots",
-                "ce5505dc-9cd9-40ae-9345-8342c41a3d3a"
+                "{{spotId}}"
               ]
             }
           },
@@ -599,21 +426,11 @@
         {
           "name": "createReservation[Client]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjNDNkNTFkNC04ZWI5LTRkZTMtOGVlYS1kZTU1NGEyZTQwOTkiLCJlbWFpbCI6ImNsaWVudGUtcGFya2luZ0B0ZXN0LmNvbSIsInJvbGUiOiJjbGllbnRlIiwiaWF0IjoxNzgxOTcxOTIyLCJleHAiOjE3ODIwNTgzMjJ9.73YGyprBWhkb8GBmA0pbwrWUNH2AI-vVGTeWSloKseM",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"parkingSpotId\": \"4ffe0cae-7b84-4e61-b5b6-b66e76d832ca\",\r\n  \"vehiclePlate\": \"CANCELTEST\",\r\n  \"vehicleType\": \"ciclo\",\r\n  \"startDate\": \"2026-09-01T10:00:00Z\",\r\n  \"endDate\": \"2026-09-01T18:00:00Z\"\r\n}",
+              "raw": "{\n  \"parkingSpotId\": \"{{spotId}}\",\n  \"vehiclePlate\": \"CANCELTEST\",\n  \"vehicleType\": \"ciclo\",\n  \"startDate\": \"2026-09-01T10:00:00Z\",\n  \"endDate\": \"2026-09-01T18:00:00Z\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -621,12 +438,10 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/reservations",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/reservations",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "reservations"
               ]
@@ -640,34 +455,13 @@
             "disableBodyPruning": true
           },
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjNDNkNTFkNC04ZWI5LTRkZTMtOGVlYS1kZTU1NGEyZTQwOTkiLCJlbWFpbCI6ImNsaWVudGUtcGFya2luZ0B0ZXN0LmNvbSIsInJvbGUiOiJjbGllbnRlIiwiaWF0IjoxNzgxOTcxOTIyLCJleHAiOjE3ODIwNTgzMjJ9.73YGyprBWhkb8GBmA0pbwrWUNH2AI-vVGTeWSloKseM",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
             "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"parkingSpotId\": \"4ffe0cae-7b84-4e61-b5b6-b66e76d832ca\",\r\n  \"vehiclePlate\": \"NEWBIKE01\",\r\n  \"vehicleType\": \"ciclo\",\r\n  \"startDate\": \"2026-06-20T19:00:00Z\",\r\n  \"endDate\": \"2026-06-22T19:00:00Z\"\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
             "url": {
-              "raw": "http://localhost:3000/reservations/my",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/reservations/my",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "reservations",
                 "my"
@@ -682,37 +476,16 @@
             "disableBodyPruning": true
           },
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMTJhMmIyYi1lZmMwLTQxN2MtYjBkOC0xZTM0YTU5MWM4NDIiLCJlbWFpbCI6ImM0QHBhcmtpbmcuY29tIiwicm9sZSI6ImVtcGxlYWRvIiwiaWF0IjoxNzgxOTczMjMwLCJleHAiOjE3ODIwNTk2MzB9.ykuSu41O-Xmm4NKGFpP07aZ4JOyXLZ95P_RRGKQuThQ",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
             "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"parkingSpotId\": \"4ffe0cae-7b84-4e61-b5b6-b66e76d832ca\",\r\n  \"vehiclePlate\": \"NEWBIKE01\",\r\n  \"vehicleType\": \"ciclo\",\r\n  \"startDate\": \"2026-06-20T19:00:00Z\",\r\n  \"endDate\": \"2026-06-22T19:00:00Z\"\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
             "url": {
-              "raw": "http://localhost:3000/reservations/5f244566-fc34-4bae-a5d3-9f124be76601",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "reservations",
-                "5f244566-fc34-4bae-a5d3-9f124be76601"
+                "{{reservationId}}"
               ]
             }
           },
@@ -721,25 +494,13 @@
         {
           "name": "currentOccupancy[Admin, Employee]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxOTcyMjgwLCJleHAiOjE3ODIwNTg2ODB9.dDON8s1z4YPdyWaI0QqlQQcEJN52uDX_HTphCkl9z8o",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:3000/reservations/occupancy",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/reservations/occupancy",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "reservations",
                 "occupancy"
@@ -751,25 +512,13 @@
         {
           "name": "getAllreservations[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxOTcyMjgwLCJleHAiOjE3ODIwNTg2ODB9.dDON8s1z4YPdyWaI0QqlQQcEJN52uDX_HTphCkl9z8o",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:3000/reservations",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/reservations",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "reservations"
               ]
@@ -780,21 +529,11 @@
         {
           "name": "createArbitraryReserv[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxOTcyMjgwLCJleHAiOjE3ODIwNTg2ODB9.dDON8s1z4YPdyWaI0QqlQQcEJN52uDX_HTphCkl9z8o",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"userId\": \"323edbb5-9b6f-497d-9a85-eb2f628f93a7\",\r\n  \"parkingSpotId\": \"4ffe0cae-7b84-4e61-b5b6-b66e76d832ca\",\r\n  \"vehiclePlate\": \"FAILTEST\",\r\n  \"vehicleType\": \"ciclo\",\r\n  \"startDate\": \"2026-08-05T10:00:00Z\",\r\n  \"endDate\": \"2026-08-05T18:00:00Z\"\r\n}",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"parkingSpotId\": \"{{spotId}}\",\n  \"vehiclePlate\": \"FAILTEST\",\n  \"vehicleType\": \"ciclo\",\n  \"startDate\": \"2026-08-05T10:00:00Z\",\n  \"endDate\": \"2026-08-05T18:00:00Z\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -802,12 +541,10 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/reservations/admin",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/reservations/admin",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "reservations",
                 "admin"
@@ -819,28 +556,16 @@
         {
           "name": "exitVehicle[Admin, Employee]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxOTcyMjgwLCJleHAiOjE3ODIwNTg2ODB9.dDON8s1z4YPdyWaI0QqlQQcEJN52uDX_HTphCkl9z8o",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "PATCH",
             "header": [],
             "url": {
-              "raw": "http://localhost:3000/reservations/3df36595-ca4e-4ef1-af53-9425e6589646/exit",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}/exit",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "reservations",
-                "3df36595-ca4e-4ef1-af53-9425e6589646",
+                "{{reservationId}}",
                 "exit"
               ]
             }
@@ -850,28 +575,16 @@
         {
           "name": "enterVehicle[Admin, Employee]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgxOTcyMjgwLCJleHAiOjE3ODIwNTg2ODB9.dDON8s1z4YPdyWaI0QqlQQcEJN52uDX_HTphCkl9z8o",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "PATCH",
             "header": [],
             "url": {
-              "raw": "http://localhost:3000/reservations/fe596d05-c144-4a09-9100-8e63812a3132/enter",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}/enter",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "reservations",
-                "fe596d05-c144-4a09-9100-8e63812a3132",
+                "{{reservationId}}",
                 "enter"
               ]
             }
@@ -881,28 +594,16 @@
         {
           "name": "cancelReservation[Admin, Client(owner)]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjNDNkNTFkNC04ZWI5LTRkZTMtOGVlYS1kZTU1NGEyZTQwOTkiLCJlbWFpbCI6ImNsaWVudGUtcGFya2luZ0B0ZXN0LmNvbSIsInJvbGUiOiJjbGllbnRlIiwiaWF0IjoxNzgxOTcxOTIyLCJleHAiOjE3ODIwNTgzMjJ9.73YGyprBWhkb8GBmA0pbwrWUNH2AI-vVGTeWSloKseM",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "PATCH",
             "header": [],
             "url": {
-              "raw": "http://localhost:3000/reservations/388dfb19-e2a4-4304-9d58-e8ee3b67ab7f/cancel",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}/cancel",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "reservations",
-                "388dfb19-e2a4-4304-9d58-e8ee3b67ab7f",
+                "{{reservationId}}",
                 "cancel"
               ]
             }
@@ -917,25 +618,13 @@
         {
           "name": "getLogsFiltered[Admin]",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjNlZGJiNS05YjZmLTQ5N2QtOWE4NS1lYjJmNjI4ZjkzYTciLCJlbWFpbCI6ImFkbWluQHBhcmtpbmcuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzgyMDgxOTA4LCJleHAiOjE3ODIxNjgzMDh9.bye3YFxTTzcgY8izyLMh3zZ46s3okq_6__KubFTms14",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:3000/audit-log",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/audit-log",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "3000",
               "path": [
                 "audit-log"
               ]
@@ -1166,6 +855,43 @@
           "response": []
         }
       ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "00000000-0000-0000-0000-0000000000u1",
+      "type": "string"
+    },
+    {
+      "key": "spotId",
+      "value": "00000000-0000-0000-0000-0000000000s1",
+      "type": "string"
+    },
+    {
+      "key": "reservationId",
+      "value": "00000000-0000-0000-0000-0000000000r1",
+      "type": "string"
     }
   ]
 }
