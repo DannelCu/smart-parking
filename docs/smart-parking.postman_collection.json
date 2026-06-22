@@ -1,0 +1,675 @@
+{
+  "info": {
+    "name": "Smart Parking API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Colección de Postman para la Smart Parking API.\n\nUSO RÁPIDO:\n1. Asegúrate de que la variable de colección `baseUrl` apunta a tu instancia (por defecto http://localhost:3000).\n2. Ejecuta `auth > login` con credenciales válidas. El token se guarda automáticamente en la variable `{{token}}` y el resto de peticiones lo usan vía la autenticación heredada (Bearer Token) a nivel de colección.\n3. Para endpoints que requieren un id en la ruta, ajusta las variables `userId`, `spotId` y `reservationId` con valores reales de tu base de datos (los valores actuales son solo ejemplos de demostración).\n\nLas credenciales de demo (cliente.demo@parking.com / admin@parking.com) corresponden al script de seed del proyecto."
+  },
+  "item": [
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "register[Public]",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cliente Demo\",\n  \"email\": \"cliente.demo@parking.com\",\n  \"password\": \"123456\",\n  \"phone\": \"+34600000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "login[Public]",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"admin@parking.com\",\r\n  \"password\": \"123456\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Captura automática del token tras un login correcto",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    if (data && data.access_token) {",
+                  "        pm.collectionVariables.set('token', data.access_token);",
+                  "        console.log('Token guardado en la variable de colección {{token}}');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "item": [
+        {
+          "name": "profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "changePass",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"currentPassword\": \"123456\",\r\n  \"newPassword\": \"nuevopass123\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "change-password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "allUsers[Admin]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createUser[Admin]",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Client 4\",\r\n  \"email\": \"c4@parking.com\",\r\n  \"password\": \"123456\",\r\n  \"role\": \"empleado\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetOneUser[Admin]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "updateUser[Admin]",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Cliente Actualizado\",\r\n  \"phone\": \"55512345\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "changeRole[Admin]",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"role\": \"empleado\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}",
+                "role"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "resetPass[Admin]",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"newPassword\": \"passwordreseteado123\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}/password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}",
+                "password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deleteUser[Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "parking-spots",
+      "item": [
+        {
+          "name": "createPs[Admin]",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"code\": \"P2\",\r\n  \"type\": \"ciclo\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parking-spots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking-spots"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "allPs[Admin, Employee]",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parking-spots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking-spots"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetOnePs[Admin, Employee]",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parking-spots/{{spotId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking-spots",
+                "{{spotId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "updatePs[Admin]",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"code\": \"C1\",\r\n    \"type\": \"auto\",\r\n    \"isActive\": true \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parking-spots/{{spotId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking-spots",
+                "{{spotId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deletePs[Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parking-spots/{{spotId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parking-spots",
+                "{{spotId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "reservations",
+      "item": [
+        {
+          "name": "createReservation[Client]",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parkingSpotId\": \"{{spotId}}\",\n  \"vehiclePlate\": \"CANCELTEST\",\n  \"vehicleType\": \"ciclo\",\n  \"startDate\": \"2026-09-01T10:00:00Z\",\n  \"endDate\": \"2026-09-01T18:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "clientReservations[Client]",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "my"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GetOneReservations[Admin, Employee, Client(owner)]",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "{{reservationId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "currentOccupancy[Admin, Employee]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/occupancy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "occupancy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getAllreservations[Admin]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createArbitraryReserv[Admin]",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"parkingSpotId\": \"{{spotId}}\",\n  \"vehiclePlate\": \"FAILTEST\",\n  \"vehicleType\": \"ciclo\",\n  \"startDate\": \"2026-08-05T10:00:00Z\",\n  \"endDate\": \"2026-08-05T18:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations/admin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "admin"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "exitVehicle[Admin, Employee]",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}/exit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "{{reservationId}}",
+                "exit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "enterVehicle[Admin, Employee]",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}/enter",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "{{reservationId}}",
+                "enter"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "cancelReservation[Admin, Client(owner)]",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reservations",
+                "{{reservationId}}",
+                "cancel"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "audit-logs",
+      "item": [
+        {
+          "name": "getLogsFiltered[Admin]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit-log",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "audit-log"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "00000000-0000-0000-0000-0000000000u1",
+      "type": "string"
+    },
+    {
+      "key": "spotId",
+      "value": "00000000-0000-0000-0000-0000000000s1",
+      "type": "string"
+    },
+    {
+      "key": "reservationId",
+      "value": "00000000-0000-0000-0000-0000000000r1",
+      "type": "string"
+    }
+  ]
+}
