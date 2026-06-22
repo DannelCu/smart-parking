@@ -4,7 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { ParkingSpot, VehicleType } from './entities/parking-spot.entity';
 import { CreateParkingSpotDto } from './dto/create-parking-spot.dto';
 import { UpdateParkingSpotDto } from './dto/update-parking-spot.dto';
@@ -105,5 +105,11 @@ export class ParkingSpotsService {
       })
       .orderBy('spot.code', 'ASC')
       .getMany();
+  }
+
+  async findByCodeLike(code: string): Promise<ParkingSpot[]> {
+    return this.parkingSpotRepository.find({
+      where: { code: ILike(`%${code}%`) },
+    });
   }
 }

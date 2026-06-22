@@ -13,6 +13,7 @@ Desarrollada como ejercicio técnico para proceso de entrevista.
 - **Autenticación:** JWT (JSON Web Tokens)
 - **Validación:** class-validator / class-transformer
 - **Testing:** Jest + Supertest (pruebas e2e)
+- **IA:** API de Anthropic (Claude) para consultas en lenguaje natural
 - **Contenedores:** Docker Compose
 
 ## Estructura del repositorio
@@ -87,7 +88,14 @@ JWT_EXPIRES_IN=1d
 ADMIN_NAME="Admin Principal"
 ADMIN_EMAIL=admin@parking.com
 ADMIN_PASSWORD=cambiar_esta_password
+
+# Anthropic / Claude (funcionalidad de IA, ver docs/AISOLUTION.md)
+ANTHROPIC_API_KEY=sk-ant-...tu-clave...
+AI_MODEL_EXTRACT=claude-haiku-4-5
+AI_MODEL_SUMMARIZE=claude-haiku-4-5
 ```
+
+> **Sobre la clave de Anthropic:** la funcionalidad de IA (`POST /ai/ask`) requiere una clave de la API de Anthropic, que se obtiene en [console.anthropic.com](https://console.anthropic.com). Es independiente de cualquier suscripción a Claude y se factura por uso; con el modelo Haiku el coste de las consultas es mínimo. Si no se configura `ANTHROPIC_API_KEY`, la aplicación no arrancará (falla de forma temprana y explícita). El resto de la API funciona con normalidad.
 
 Crea un archivo `.env.test` dentro de **`parking-api/`** (usado exclusivamente por los tests e2e, apunta a una base de datos separada):
 
@@ -207,10 +215,33 @@ En producción, lo correcto es reemplazar `synchronize: true` por un sistema de 
 
 En resumen: `synchronize: true` es excelente para iterar rápido en local, y por eso se usa aquí; las migraciones versionadas son obligatorias en cuanto el proyecto toca un entorno con datos que importan.
 
+## Funcionalidad de IA: consultas en lenguaje natural
+
+La API incluye un endpoint, `POST /ai/ask` (solo administradores), que permite consultar el estado y la actividad del parking escribiendo preguntas en lenguaje natural, en vez de construir filtros manualmente. Integra la API de Anthropic (Claude).
+
+Ejemplos de preguntas que entiende:
+- "¿el auto de Juan está en el parqueo ahora?"
+- "¿cuántas plazas libres quedan?"
+- "¿cuántos vehículos entraron ayer?"
+- "¿qué clientes reservan más?"
+- "¿quiénes no se presentaron a sus reservas?"
+
+El diseño se apoya en un principio simple: **Claude interpreta la pregunta y la traduce a una operación estructurada de un catálogo cerrado; el backend la valida y la ejecuta usando la lógica de negocio existente.** Claude nunca accede directamente a la base de datos ni genera consultas. El detalle completo del diseño, las capabilities soportadas, las defensas contra inyección de prompts y alucinaciones, y la posible evolución futura están en **[docs/AISOLUTION.md](./docs/AISOLUTION.md)**.
+
+Ejemplo de uso:
+
+```bash
+curl -X POST http://localhost:3000/ai/ask \
+  -H "Authorization: Bearer <token_de_admin>" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "¿cuántos autos hay en el parqueo ahora?"}'
+```
+
 ## Documentación adicional
 
 - **[Arquitectura y decisiones de diseño](./docs/ARCHITECTURE.md)** — explicación detallada de cómo está construido el sistema y por qué se tomó cada decisión técnica relevante
 - **[Documentación de la API](./docs/API.md)** — referencia completa de todos los endpoints, roles requeridos, y ejemplos de uso
+- **[Solución de IA](./docs/AISOLUTION.md)** — diseño de la funcionalidad de consultas en lenguaje natural con Claude: capabilities, flujo, defensas de seguridad y evolución futura
 - **[Colección de Postman](./docs/smart-parking.postman_collection.json)** — colección lista para importar con todos los endpoints organizados por módulo
 
 ## Roles del sistema

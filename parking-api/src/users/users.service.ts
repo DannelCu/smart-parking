@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User, UserRole } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -55,6 +55,12 @@ export class UsersService {
 
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } });
+  }
+
+  async findByNameLike(name: string): Promise<User[]> {
+    return this.userRepository.find({
+      where: { name: ILike(`%${name}%`) },
+    });
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {

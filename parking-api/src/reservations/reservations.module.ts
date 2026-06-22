@@ -16,5 +16,6 @@ import { AuditLogModule } from '../audit-log/audit-log.module';
   ],
   controllers: [ReservationsController],
   providers: [ReservationsService],
+  exports: [ReservationsService],
 })
 export class ReservationsModule {}

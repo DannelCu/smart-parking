@@ -37,6 +37,7 @@ Referencia completa de todos los endpoints de la Smart Parking API: rutas, roles
 | `PATCH` | `/reservations/:id/enter` | admin, empleado | Registrar entrada física |
 | `PATCH` | `/reservations/:id/exit` | admin, empleado | Registrar salida física |
 | `GET` | `/audit-log` | admin | Consultar el log de auditoría (con filtros) |
+| `POST` | `/ai/ask` | admin | Consulta en lenguaje natural sobre el parking (IA) |
 
 ---
 
@@ -487,6 +488,81 @@ Consulta el log de auditoría almacenado en MongoDB. **Solo admin.** Corresponde
 ```
 
 Cada entrada es un **snapshot completo e inmutable** del estado en el momento del evento (ver ARCHITECTURE.md para el razonamiento). Los resultados se ordenan del más reciente al más antiguo.
+
+---
+
+## IA — Consultas en lenguaje natural
+
+### POST /ai/ask
+
+Recibe una pregunta en lenguaje natural sobre el estado o la actividad del parking y devuelve una respuesta redactada, junto con los datos que la respaldan. **Solo admin.** Integra la API de Anthropic (Claude). El diseño completo está documentado en [AISOLUTION.md](./AISOLUTION.md).
+
+**Request body:**
+
+```json
+{
+  "question": "¿el auto de Juan está en el parqueo ahora?"
+}
+```
+
+| Campo | Tipo | Requerido | Reglas |
+|---|---|---|---|
+| `question` | string | Sí | No vacío, máximo 500 caracteres |
+
+**Respuesta `201`:**
+
+```json
+{
+  "answer": "Sí, el vehículo de Juan Pérez (placa ABC123) está en el parking, en la plaza A-01. Entró hoy a las 14:30.",
+  "capability": "presence_lookup",
+  "intent": "CURRENT_STATE",
+  "resultType": "presence_by_owner",
+  "data": { "owner": { "name": "Juan Pérez" }, "reservations": [ /* ... */ ] }
+}
+```
+
+| Campo | Descripción |
+|---|---|
+| `answer` | Respuesta en lenguaje natural redactada por Claude a partir de los datos reales |
+| `capability` | La capability seleccionada (o `null` si la pregunta no es soportada) |
+| `intent` | `CURRENT_STATE`, `HISTORY` o `UNSUPPORTED` |
+| `resultType` | Etiqueta del resultado concreto obtenido (ver tabla más abajo) |
+| `data` | Datos crudos que respaldan la respuesta, para transparencia y verificación |
+
+Los campos `capability`, `intent`, `resultType` y `data` se incluyen como **transparencia**: permiten auditar cómo se interpretó la pregunta y verificar la respuesta contra los datos reales, sin depender únicamente del texto.
+
+**Capabilities soportadas:**
+
+| Capability | Fuente | Responde a |
+|---|---|---|
+| `presence_lookup` | PostgreSQL | ¿Está un vehículo dentro ahora? (por dueño, placa o plaza) |
+| `occupancy_summary` | PostgreSQL | Ocupación general actual |
+| `active_reservations` | PostgreSQL | Reservas vigentes |
+| `audit_query` | MongoDB | Historial de eventos con filtros |
+| `business_insights` | Mongo / Postgres | Analítica: top clientes, no-shows, plazas más usadas, tasa de cancelación |
+| `entity_history` | MongoDB | Historial completo de una entidad concreta |
+
+**Valores posibles de `resultType`:**
+
+| resultType | Significado |
+|---|---|
+| `presence_by_owner` / `presence_by_plate` / `presence_by_spot` | Resultado de presencia según el criterio de búsqueda |
+| `occupancy_summary` | Resumen de ocupación |
+| `active_reservations` | Listado de reservas vigentes |
+| `audit_query` | Resultado del histórico filtrado |
+| `insight_top_customers` / `insight_no_shows` / `insight_busiest_spots` / `insight_cancellation_rate` | Resultados de analítica |
+| `entity_history` | Historial de la entidad consultada |
+| `disambiguation` | Hay varias coincidencias; la respuesta pide aclarar cuál |
+| `owner_not_found` / `spot_not_found` | No se encontró la entidad mencionada |
+| `unsupported` | La pregunta queda fuera del alcance del sistema |
+
+**Ejemplos de preguntas:**
+- "¿cuántas plazas libres de tipo auto quedan?" → `occupancy_summary`
+- "¿cuántos vehículos entraron ayer?" → `audit_query`
+- "¿quiénes no se presentaron a sus reservas este mes?" → `business_insights` (no_shows)
+- "¿qué tiempo hace hoy?" → `unsupported`
+
+**Errores:** `400` si la pregunta está vacía o supera 500 caracteres. `401`/`403` si no es un admin autenticado. `422` (o `500`) si la clasificación de la IA no devuelve un resultado procesable.
 
 ---
 

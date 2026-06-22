@@ -5,7 +5,16 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThan, MoreThan, IsNull, Not, Repository } from 'typeorm';
+import {
+  LessThan,
+  MoreThan,
+  IsNull,
+  Not,
+  ILike,
+  FindOptionsWhere,
+  Between,
+  Repository,
+} from 'typeorm';
 import { Reservation, ReservationStatus } from './entities/reservation.entity';
 import { ParkingSpotsService } from '../parking-spots/parking-spots.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
@@ -289,6 +298,80 @@ export class ReservationsService {
       where: { userId },
       relations: { parkingSpot: true },
       order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findActivePresenceByOwner(userId: string): Promise<Reservation[]> {
+    return this.reservationRepository.find({
+      where: {
+        userId,
+        status: ReservationStatus.ACTIVE,
+        actualEntryDate: Not(IsNull()),
+        actualExitDate: IsNull(),
+      },
+      relations: { parkingSpot: true, user: true },
+    });
+  }
+
+  async findActivePresenceByPlate(plate: string): Promise<Reservation[]> {
+    return this.reservationRepository.find({
+      where: {
+        vehiclePlate: ILike(`%${plate}%`),
+        status: ReservationStatus.ACTIVE,
+        actualEntryDate: Not(IsNull()),
+        actualExitDate: IsNull(),
+      },
+      relations: { parkingSpot: true, user: true },
+    });
+  }
+
+  async findActivePresenceBySpot(spotCode: string): Promise<Reservation[]> {
+    return this.reservationRepository.find({
+      where: {
+        parkingSpot: { code: ILike(`%${spotCode}%`) },
+        status: ReservationStatus.ACTIVE,
+        actualEntryDate: Not(IsNull()),
+        actualExitDate: IsNull(),
+      },
+      relations: { parkingSpot: true, user: true },
+    });
+  }
+
+  async findActiveReservations(
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<Reservation[]> {
+    const where: FindOptionsWhere<Reservation> = {
+      status: ReservationStatus.ACTIVE,
+      actualExitDate: IsNull(),
+    };
+
+    if (startDate && endDate) {
+      where.startDate = LessThan(endDate);
+      where.endDate = MoreThan(startDate);
+    }
+
+    return this.reservationRepository.find({
+      where,
+      relations: { parkingSpot: true, user: true },
+      order: { startDate: 'ASC' },
+    });
+  }
+
+  async findNoShows(startDate?: Date, endDate?: Date): Promise<Reservation[]> {
+    const now = new Date();
+
+    const where: FindOptionsWhere<Reservation> = {
+      status: ReservationStatus.ACTIVE,
+      actualEntryDate: IsNull(),
+      endDate:
+        startDate && endDate ? Between(startDate, endDate) : LessThan(now),
+    };
+
+    return this.reservationRepository.find({
+      where,
+      relations: { parkingSpot: true, user: true },
+      order: { endDate: 'DESC' },
     });
   }
 

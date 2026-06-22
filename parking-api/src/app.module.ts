@@ -12,6 +12,7 @@ import { RolesGuard } from './common/guards/roles.guard';
 import { ParkingSpotsModule } from './parking-spots/parking-spots.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { AuditLogModule } from './audit-log/audit-log.module';
     ParkingSpotsModule,
     ReservationsModule,
     AuditLogModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [

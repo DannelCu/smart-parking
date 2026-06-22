@@ -181,6 +181,14 @@ El controlador de auditoría usa el decorador `@SkipSerialize()`. El interceptor
 
 El endpoint `GET /audit-log` (solo admin) soporta filtrado por acción, rango de fechas, y por los IDs de reserva, plaza, dueño y ejecutor, además de paginación. Esto cubre el caso de uso del enunciado (un admin consultando el historial) con la flexibilidad suficiente para responder preguntas reales: "¿qué hizo este empleado?", "¿qué pasó con esta plaza?", "¿qué ocurrió entre estas fechas?".
 
+## Módulo de IA (consultas en lenguaje natural)
+
+El módulo `ai` añade un endpoint, `POST /ai/ask` (solo admin), que traduce preguntas en lenguaje natural en consultas sobre el sistema, integrando la API de Anthropic (Claude). Es la pieza que aprovecha de forma más visible la arquitectura de doble base de datos: enruta cada pregunta hacia PostgreSQL (estado actual: presencia de vehículos, ocupación, reservas activas) o MongoDB (histórico y analítica: auditoría, no-shows, clientes con más reservas), según la intención detectada.
+
+La decisión de diseño central es la separación entre interpretación y ejecución: **Claude solo traduce la pregunta a una operación estructurada de un catálogo cerrado de capabilities; el backend valida esa operación y la ejecuta reutilizando los servicios de negocio ya existentes** (`UsersService`, `ReservationsService`, `AuditLogService`, `ParkingSpotsService`). Claude nunca accede a la base de datos, nunca genera consultas y nunca produce identificadores: la resolución de nombres a entidades reales (con desambiguación cuando hay varias coincidencias) la hace el backend. Esta frontera es a la vez la garantía de coherencia (no se duplica lógica de negocio) y la base de las defensas contra inyección de prompts y alucinaciones.
+
+El módulo se estructura en tres responsabilidades separadas: un servicio que solo habla con Claude (clasificar y redactar), un orquestador que solo habla con la base de datos (enrutar y ejecutar), y un controlador que coordina el flujo. El detalle completo —el catálogo de capabilities, el flujo de dos llamadas, las defensas de seguridad, la elección de modelo y la evolución futura— está documentado aparte en **[AISOLUTION.md](./AISOLUTION.md)**.
+
 ## Paginación y escalabilidad de los listados
 
 Una decisión que conviene hacer explícita: **de los endpoints que devuelven listados (`GET .../`), solo el de auditoría (`GET /audit-log`) está paginado**. Los demás listados (`GET /users`, `GET /reservations`, `GET /reservations/my`, `GET /parking-spots`) devuelven todos los registros de una vez.

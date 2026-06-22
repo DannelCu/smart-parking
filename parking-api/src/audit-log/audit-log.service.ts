@@ -127,4 +127,113 @@ export class AuditLogService {
 
     return { data, total, page: filters.page, limit: filters.limit };
   }
+
+  async getTopCustomers(
+    startDate?: string,
+    endDate?: string,
+    limit = 5,
+  ): Promise<Array<{ ownerId: string; ownerName: string; count: number }>> {
+    const match: Record<string, unknown> = { action: AuditLogAction.CREATED };
+    this.applyDateRange(match, startDate, endDate);
+
+    const result = await this.auditLogModel.aggregate<{
+      _id: string;
+      ownerName: string;
+      count: number;
+    }>([
+      { $match: match },
+      {
+        $group: {
+          _id: '$reservationOwner.id',
+          ownerName: { $first: '$reservationOwner.name' },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: limit },
+    ]);
+
+    return result.map((r) => ({
+      ownerId: r._id,
+      ownerName: r.ownerName,
+      count: r.count,
+    }));
+  }
+
+  async getBusiestSpots(
+    startDate?: string,
+    endDate?: string,
+    limit = 5,
+  ): Promise<Array<{ spotId: string; spotCode: string; count: number }>> {
+    const match: Record<string, unknown> = {};
+    this.applyDateRange(match, startDate, endDate);
+
+    const result = await this.auditLogModel.aggregate<{
+      _id: string;
+      spotCode: string;
+      count: number;
+    }>([
+      { $match: match },
+      {
+        $group: {
+          _id: '$parkingSpot.id',
+          spotCode: { $first: '$parkingSpot.code' },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: limit },
+    ]);
+
+    return result.map((r) => ({
+      spotId: r._id,
+      spotCode: r.spotCode,
+      count: r.count,
+    }));
+  }
+
+  async getCancellationRate(
+    startDate?: string,
+    endDate?: string,
+  ): Promise<{ created: number; cancelled: number; rate: number }> {
+    const match: Record<string, unknown> = {};
+    this.applyDateRange(match, startDate, endDate);
+
+    const result = await this.auditLogModel.aggregate<{
+      _id: string;
+      count: number;
+    }>([
+      { $match: match },
+      {
+        $group: {
+          _id: '$action',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const counts: Record<string, number> = {};
+    for (const r of result) {
+      counts[r._id] = r.count;
+    }
+
+    const created = counts[AuditLogAction.CREATED] ?? 0;
+    const cancelled = counts[AuditLogAction.CANCELLED] ?? 0;
+    const rate = created > 0 ? (cancelled / created) * 100 : 0;
+
+    return { created, cancelled, rate: Math.round(rate * 100) / 100 };
+  }
+
+  private applyDateRange(
+    match: Record<string, unknown>,
+    startDate?: string,
+    endDate?: string,
+  ): void {
+    if (startDate || endDate) {
+      const range: { $gte?: Date; $lte?: Date } = {};
+      if (startDate) range.$gte = new Date(startDate);
+      if (endDate) range.$lte = new Date(endDate);
+      match.timestamp = range;
+    }
+  }
 }
